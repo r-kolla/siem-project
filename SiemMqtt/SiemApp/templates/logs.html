@@ -1,0 +1,30 @@
+<!-- templates/siemapp/logs.html -->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logs</title>
+</head>
+<body>
+    <h1>Logs</h1>
+    
+
+    <script>
+        const socket = new WebSocket("ws://localhost:8000/ws/logs/");
+
+        socket.onmessage = function(event) {
+        const data = JSON.parse(event.data);
+        const logContainer = document.getElementById("log-container");
+        const newLog = document.createElement("p");
+        newLog.textContent = data.message;
+        logContainer.appendChild(newLog);
+};
+    </script>
+    <div id="log-container">
+        <!-- Logs will be displayed here -->
+    </div>
+
+</body>
+</html>
