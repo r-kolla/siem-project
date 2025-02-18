@@ -1,6 +1,6 @@
 from django.urls import re_path
-from SiemApp.consumers import LogConsumer
+from .consumers import LogConsumer
 
 websocket_urlpatterns = [
-    re_path(r'ws/logs/$', LogConsumer.as_asgi()),
+    re_path(r"ws/logs/$", LogConsumer.as_asgi()),
 ]

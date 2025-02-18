@@ -10,7 +10,8 @@ class LogConsumer(AsyncWebsocketConsumer):
         await self.channel_layer.group_discard("logs", self.channel_name)
 
     async def receive(self, text_data):
-        pass  # Not needed since logs are pushed, not received from front-end
+        pass  # No need to handle incoming messages from client
 
-    async def log_message(self, event):
-        await self.send(text_data=json.dumps({"message": event["message"]}))
+    async def send_log(self, event):
+        log_message = event["message"]
+        await self.send(text_data=json.dumps(log_message))
