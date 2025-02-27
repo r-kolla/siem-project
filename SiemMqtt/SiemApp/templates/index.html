@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIEM Logs</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid black; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+    </style>
+</head>
+<body>
+    <h2>SIEM Logs</h2>
+    <table>
+        <thead>
+            <tr>
+                <th>Timestamp</th>
+                <th>Topic</th>
+                <th>Publisher ID</th>
+                <th>Message</th>
+                <th>QoS</th>
+                <th>Retain</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log in logs %}
+            <tr>
+                <td>{{ log.timestamp }}</td>
+                <td>{{ log.topic }}</td>
+                <td>{{ log.publisher_id }}</td>
+                <td>{{ log.message }}</td>
+                <td>{{ log.qos }}</td>
+                <td>{{ log.retain }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6">No logs available</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
