@@ -4,10 +4,14 @@ import sys
 import json
 import logging
 import paho.mqtt.client as mqtt
-from datetime import datetime, timezone  
+from datetime import datetime, timezone, timedelta
 import smtplib
 from email.mime.text import MIMEText
 import socket
+from collections import defaultdict, deque
+import time
+import threading
+
 
 # Setup Django
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -70,18 +74,51 @@ def send_notification(log_entry):
     except Exception as e:
         logging.error(f"❌ Failed to send notification: {e}")
 
+
+
+FAILED_LOGIN_THRESHOLD = 5
+FAILED_LOGIN_WINDOW = timedelta(minutes=1)
+
+failed_logins = defaultdict(list)  # Tracks failed logins per (IP, Publisher ID)
+
 def detect_suspicious_activity(log_entry):
     ip = log_entry.get("ip", None)
-    if ip and "failed login" in log_entry.get("message", "").lower():
-        failed_logins[ip] = failed_logins.get(ip, 0) + 1
-        logging.warning(f"⚠️ Failed login attempt detected from {ip}. Total attempts: {failed_logins[ip]}")
+    publisher_id = log_entry.get("publisher_id", None)
+    
+    if not ip or not publisher_id:
+        return False  # Skip if missing data
 
-        if failed_logins[ip] >= FAILED_LOGIN_THRESHOLD:
-            threat_details = f"Multiple failed login attempts detected from IP {ip} (Threshold: {FAILED_LOGIN_THRESHOLD})."
+    # Check for failed login attempt in message
+    if "connection refused" in log_entry.get("message", "").lower():
+        now = datetime.now(timezone.utc)  # Ensure timezone awareness
+        failed_logins[(ip, publisher_id)].append(now)
+
+        # Remove entries older than 1 minute
+        failed_logins[(ip, publisher_id)] = [
+            timestamp for timestamp in failed_logins[(ip, publisher_id)] 
+            if now - timestamp < FAILED_LOGIN_WINDOW
+        ]
+
+        failed_count = len(failed_logins[(ip, publisher_id)])
+        logging.warning(f"⚠️ Failed login from {ip} ({publisher_id}) - Attempt {failed_count}")
+
+        if failed_count >= FAILED_LOGIN_THRESHOLD:
+            threat_details = (
+                f"🚨 Multiple failed login attempts from {ip} ({publisher_id})!\n"
+                f"Total failed attempts in the last minute: {failed_count}"
+            )
             logging.error(threat_details)
-            send_notification(threat_details)
+            send_notification({
+                "timestamp": now.isoformat(),
+                "ip": ip,
+                "publisher_id": publisher_id,
+                "message": threat_details,
+            })
             return True
+
     return False
+
+
 
 def track_active_devices(log_entry):
     device_id = log_entry.get("device_id", "unknown")
@@ -151,6 +188,82 @@ def on_message(client, userdata, msg):
         logging.error(f"❌ Error processing MQTT message: {e}")
 
 # Setup MQTT Client
+
+
+
+MOSQUITTO_LOG_FILE = "/opt/homebrew/var/log/mosquitto/mosquitto.log"
+UNAUTHORIZED_ATTEMPTS = {}
+
+def monitor_mosquitto_logs():
+    while True:
+        try:
+            with open(MOSQUITTO_LOG_FILE, "r", errors="ignore") as logfile:
+                logfile.seek(0, os.SEEK_END)  # Start at the end of the file
+                while True:
+                    line = logfile.readline()
+                    if not line:
+                        time.sleep(1)  # Adjusted to avoid excessive CPU usage
+                        continue
+                    
+                    if "disconnected, not authorised" in line:
+                        process_unauthorized_login(line)
+        except Exception as e:
+            logging.error(f"❌ Error reading Mosquitto log file: {e}")
+            time.sleep(5)  # Wait before retrying in case of file errors
+
+
+
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - [%(levelname)s] - %(message)s")
+
+# Constants
+FAILED_ATTEMPT_WINDOW = 60  # Time window in seconds
+MAX_FAILED_ATTEMPTS = 5 # Threshold for triggering an alert
+UNAUTHORIZED_ATTEMPTS = {}  # Tracks failed login attempts per IP
+
+def process_unauthorized_login(log_line):
+    parts = log_line.split()
+    
+    try:
+        # Extract timestamp safely
+        timestamp_str = parts[0].strip(":")
+        timestamp = int(timestamp_str) if timestamp_str.isdigit() else int(datetime.now(timezone.utc).timestamp())
+        
+        # Extract client ID and IP
+        client_id = parts[2] if len(parts) > 2 else "unknown_client"
+        ip = parts[3] if len(parts) > 3 else "127.0.0.1"  # Default to local IP
+
+        logging.info(f"🔍 Processing login attempt: Client={client_id}, IP={ip}, Timestamp={timestamp}")
+
+        # Track failed attempts
+        if ip not in UNAUTHORIZED_ATTEMPTS:
+            UNAUTHORIZED_ATTEMPTS[ip] = deque()
+        
+        attempts = UNAUTHORIZED_ATTEMPTS[ip]
+        attempts.append(timestamp)
+
+        # Remove old attempts outside the window
+        while attempts and attempts[0] < timestamp - FAILED_ATTEMPT_WINDOW:
+            attempts.popleft()
+
+        logging.info(f"📊 Failed login count for {ip}: {len(attempts)}")
+
+        # Check if threshold is reached
+        if len(attempts) >= MAX_FAILED_ATTEMPTS:
+            logging.error(f"🚨 Unauthorized login detected from {client_id} @ {ip} ({MAX_FAILED_ATTEMPTS} attempts in {FAILED_ATTEMPT_WINDOW} sec)")
+            
+            send_notification({
+                "timestamp": datetime.fromtimestamp(timestamp, tz=timezone.utc).isoformat(),
+                "ip": ip,
+                "publisher_id": client_id,
+                "message": f"Multiple failed login attempts detected from {client_id} @ {ip}"
+            })
+            attempts.clear()  # Reset after sending alert
+
+    except Exception as e:
+        logging.error(f"❌ Error processing log line: {log_line} | {e}")
+
+
+
 client = mqtt.Client(client_id=MQTT_CLIENT_ID, userdata={"client_id": MQTT_CLIENT_ID}, protocol=mqtt.MQTTv311)
 client.username_pw_set(MQTT_USERNAME, MQTT_PASSWORD)
 client.on_connect = on_connect
@@ -160,6 +273,8 @@ client.on_message = on_message
 try:
     client.connect(MQTT_BROKER, MQTT_PORT, 60)
     logging.info("📡 MQTT Listener Started...")
+    log_monitor_thread = threading.Thread(target=monitor_mosquitto_logs, daemon=True)
+    log_monitor_thread.start()
     client.loop_forever()
 except Exception as e:
     logging.error(f"❌ Failed to connect to MQTT broker: {e}")
