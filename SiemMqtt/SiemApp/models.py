@@ -2,11 +2,12 @@ from django.db import models
 
 class Log(models.Model):
     timestamp = models.DateTimeField()
-    topic = models.CharField(max_length=255, default="unknown")  # Default topic if missing
-    publisher_id = models.CharField(max_length=255, default="unknown")  # New Field
+    topic = models.CharField(max_length=255)
     message = models.TextField()
-    qos = models.IntegerField(default=0)  # QoS defaults to 0
-    retain = models.BooleanField(default=False)  # Retain defaults to False
+    qos = models.IntegerField()
+    retain = models.BooleanField()
+    publisher_id = models.CharField(max_length=255, default="unknown")
+    ip = models.GenericIPAddressField(default="unknown", null=True, blank=True)  # Add this field
 
     def __str__(self):
         return f"[{self.timestamp}] {self.topic}: {self.message}"
