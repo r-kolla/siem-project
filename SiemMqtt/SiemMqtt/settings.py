@@ -66,8 +66,12 @@ WSGI_APPLICATION = 'SiemMqtt.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'siem_db',  # Replace with your database name
+        'USER': 'postgres',  # Replace with your PostgreSQL username
+        'PASSWORD': 'bananas',  # Replace with your PostgreSQL password
+        'HOST': 'localhost',  # Keep as localhost if running locally
+        'PORT': '5432',  
     }
 }
 

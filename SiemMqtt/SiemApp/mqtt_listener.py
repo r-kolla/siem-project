@@ -13,10 +13,13 @@ import time
 import threading
 
 
+
+
 # Setup Django
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "SiemMqtt.settings")
 django.setup()
+from SiemApp.models import Log, Device
 
 from SiemApp.models import Log  
 
@@ -35,7 +38,7 @@ MQTT_PASSWORD = "bananas"
 MQTT_CLIENT_ID = "SIEM_Listener"
 
 # Security Settings
-AUTHORIZED_DEVICES = ["device_1", "device_2", "Batmans-MBAir", "Batmans-MBAir.local"]
+AUTHORIZED_DEVICES = ["device_1", "device_2", "Batmans-MBAir", "Batmans-MBAisrs.local"]
 FAILED_LOGIN_THRESHOLD = 5
 failed_logins = {}
 
@@ -138,11 +141,12 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, userdata, msg):
     try:
-        payload = msg.payload.decode()
+        payload = msg.payload.decode().strip()
+        
         log_entry = {
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(timezone.utc),
             "topic": msg.topic,
-            "message": "",
+            "message": payload,  # Default to raw payload
             "qos": msg.qos,
             "retain": msg.retain,
             "publisher_id": userdata.get("client_id", "unknown"),
@@ -150,12 +154,14 @@ def on_message(client, userdata, msg):
             "device_id": ""
         }
 
-        try:
-            json_payload = json.loads(payload)
-            log_entry["message"] = json_payload.get("message", payload)
-            log_entry["publisher_id"] = json_payload.get("client_id", userdata.get("client_id", "unknown"))
-        except json.JSONDecodeError:
-            log_entry["message"] = payload  
+        # Attempt to parse JSON if valid
+        if payload:
+            try:
+                json_payload = json.loads(payload)
+                log_entry["message"] = json_payload.get("message", payload)
+                log_entry["publisher_id"] = json_payload.get("client_id", log_entry["publisher_id"])
+            except json.JSONDecodeError:
+                pass  # Keep raw payload as message if JSON parsing fails
 
         # Extract sender details
         sender_ip = client._sock.getpeername()[0] if client._sock else "Unknown"
@@ -166,12 +172,6 @@ def on_message(client, userdata, msg):
 
         logging.info(f"📥 Received Log: {log_entry}")
 
-        if detect_suspicious_activity(log_entry):
-            logging.warning("🚨 Suspicious activity detected! Notification sent.")
-
-        if track_active_devices(log_entry):
-            logging.warning("🚨 Unauthorized device detected! Notification sent.")
-
         # Save Log to Database
         try:
             Log.objects.create(
@@ -180,13 +180,14 @@ def on_message(client, userdata, msg):
                 message=log_entry["message"],
                 qos=log_entry["qos"],
                 retain=log_entry["retain"],
-                publisher_id=log_entry["publisher_id"]
+                publisher_id=log_entry["publisher_id"],
+                ip=log_entry["ip"]
             )
         except Exception as e:
             logging.error(f"❌ Error saving log to database: {e}")
+    
     except Exception as e:
         logging.error(f"❌ Error processing MQTT message: {e}")
-
 # Setup MQTT Client
 
 
