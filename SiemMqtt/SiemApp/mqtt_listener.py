@@ -38,7 +38,7 @@ MQTT_PASSWORD = "bananas"
 MQTT_CLIENT_ID = "SIEM_Listener"
 
 # Security Settings
-AUTHORIZED_DEVICES = ["device_1", "device_2", "Batmans-MBAir", "Batmans-MBAisrs.local"]
+AUTHORIZED_DEVICES = [ "Batmans-MBAir.local"]
 FAILED_LOGIN_THRESHOLD = 5
 failed_logins = {}
 
