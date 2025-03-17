@@ -126,11 +126,18 @@ def detect_suspicious_activity(log_entry):
 def track_active_devices(log_entry):
     device_id = log_entry.get("device_id", "unknown")
     if device_id not in AUTHORIZED_DEVICES:
-        threat_details = f"Unauthorized device detected: {device_id}"
-        logging.error(threat_details)
-        send_notification(threat_details)
+        threat_details = {
+            "timestamp": log_entry["timestamp"].isoformat(),
+            "ip": log_entry["ip"],
+            "publisher_id": log_entry["publisher_id"],
+            "device_id": device_id,
+            "message": f"Unauthorized device detected: {device_id}",
+        }
+        logging.error(threat_details["message"])
+        send_notification(threat_details)  # ✅ Pass a dictionary
         return True
     return False
+
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -138,6 +145,8 @@ def on_connect(client, userdata, flags, rc):
         client.subscribe("#")
     else:
         logging.error(f"❌ Connection failed with error code {rc}")
+
+from django.core.exceptions import ObjectDoesNotExist
 
 def on_message(client, userdata, msg):
     try:
@@ -151,7 +160,7 @@ def on_message(client, userdata, msg):
             "retain": msg.retain,
             "publisher_id": userdata.get("client_id", "unknown"),
             "ip": "",
-            "device_id": ""
+            "device": None  # Store Device instance here instead of a string
         }
 
         # Attempt to parse JSON if valid
@@ -165,10 +174,15 @@ def on_message(client, userdata, msg):
 
         # Extract sender details
         sender_ip = client._sock.getpeername()[0] if client._sock else "Unknown"
-        sender_device = socket.gethostname()
+        sender_device_hostname = socket.gethostname()  # Use hostname since 'name' doesn't exist
         
         log_entry["ip"] = sender_ip
-        log_entry["device_id"] = sender_device
+
+        # Resolve device reference using 'hostname' instead of 'name'
+        try:
+            log_entry["device"] = Device.objects.get(hostname=sender_device_hostname)
+        except ObjectDoesNotExist:
+            log_entry["device"] = None  # If device isn't found, store NULL
 
         logging.info(f"📥 Received Log: {log_entry}")
 
@@ -181,7 +195,8 @@ def on_message(client, userdata, msg):
                 qos=log_entry["qos"],
                 retain=log_entry["retain"],
                 publisher_id=log_entry["publisher_id"],
-                ip=log_entry["ip"]
+                ip=log_entry["ip"],
+                device=log_entry["device"]  # Stores actual Device instance or NULL
             )
         except Exception as e:
             logging.error(f"❌ Error saving log to database: {e}")

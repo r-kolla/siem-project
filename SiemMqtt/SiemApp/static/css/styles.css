@@ -1,0 +1,94 @@
+.container {
+    display: flex;
+}
+
+.sidebar {
+    width: 200px;
+    background-color: #222;
+    color: white;
+    height: 100vh;
+    padding-top: 20px;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.sidebar ul li {
+    padding: 10px;
+    text-align: center;
+}
+
+.sidebar ul li a {
+    color: white;
+    text-decoration: none;
+    display: block;
+}
+
+.sidebar ul li.active, .sidebar ul li:hover {
+    background-color: #333; /* Dark Grey */
+}
+
+.main-content {
+    flex-grow: 1;
+    padding: 20px;
+    background-color: #1a1a1a; /* Darker background */
+    color: white;
+}
+
+.page-title {
+    font-size: 24px;
+    margin-bottom: 10px;
+}
+
+.filters {
+    margin-bottom: 20px;
+}
+
+.filters select, .filters input {
+    background-color: #444; /* Dark Grey */
+    color: white;
+    border: 1px solid #555;
+    padding: 5px;
+    margin-right: 10px;
+}
+
+.table-container {
+    overflow-x: auto;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #333;
+}
+
+th {
+    background-color: #444; /* Dark Grey */
+}
+
+.status-red {
+    color: red;
+    font-weight: bold;
+}
+
+.status-orange {
+    color: orange;
+    font-weight: bold;
+}
+
+.status-yellow {
+    color: yellow;
+    font-weight: bold;
+}
+
+.status-green {
+    color: lightgreen;
+    font-weight: bold;
+}

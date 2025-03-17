@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIEM Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&display=swap">
+    <style>
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background-color: #1b1b1b;
+            color: #d1d1d1;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #141414;
+            padding: 20px;
+            height: 100vh;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            padding: 10px 15px;
+            margin: 10px 0;
+            background-color: #222;
+            border-radius: 5px;
+        }
+        .sidebar ul li a {
+            text-decoration: none;
+            color: #d1d1d1;
+            display: block;
+        }
+        .sidebar ul li:hover {
+            background-color: #0072C6;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .header {
+            background-color: #0d0d0d;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .content-box {
+            background-color: #222;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <ul>
+            <li><a href="{% url 'logs' %}">Logs</a></li>
+            <li><a href="{% url 'threats_page' %}">Threats</a></li>
+            <li><a href="{% url 'rules_page' %}">Rules</a></li>
+            <li><a href="{% url 'device_list' %}">Devices</a></li>
+            
+        </ul>
+    </div>
+    <div class="main-content">
+        <div class="header">SIEM Dashboard</div>
+        <div class="content-box">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+</body>
+</html>

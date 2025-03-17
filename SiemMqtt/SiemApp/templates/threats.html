@@ -1,0 +1,177 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Threats</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&display=swap">
+    <style>
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background-color: #1b1b1b;
+            color: #d1d1d1;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #141414;
+            padding: 20px;
+            height: 100vh;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            padding: 10px 15px;
+            margin: 10px 0;
+            background-color: #222;
+            border-radius: 5px;
+        }
+        .sidebar ul li a {
+            text-decoration: none;
+            color: #d1d1d1;
+            display: block;
+        }
+        .sidebar ul li:hover {
+            background-color: #333;
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .header {
+            background-color: #0d0d0d;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .content-box {
+            background-color: #222;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        .filters input,
+        .filters select {
+            background-color: #333;
+            color: white;
+        }
+        .filters button {
+            padding: 10px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        .filters button:hover {
+            background-color: #218838;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #1e1e1e;
+            color: white;
+            margin-top: 20px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        th {
+            background-color: #333;
+        }
+        .status-critical {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .status-high {
+            color: orange;
+            font-weight: bold;
+        }
+        .status-medium {
+            color: yellow;
+            font-weight: bold;
+        }
+        .status-low {
+            color: lightgreen;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    {% include 'sidebar.html' %}
+
+    <div class="main-content">
+        <div class="header">Threats</div>
+        <div class="content-box">
+            <div class="filters">
+                <input type="text" id="searchThreat" placeholder="Search Threat">
+                <select id="severityFilter">
+                    <option value="">All Severities</option>
+                    <option value="low">Low</option>
+                    <option value="medium">Medium</option>
+                    <option value="high">High</option>
+                    <option value="critical">Critical</option>
+                </select>
+                <button onclick="applyFilters()">Apply</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Threat ID</th>
+                        <th>Source</th>
+                        <th>Destination</th>
+                        <th>Severity</th>
+                        <th>Description</th>
+                        <th>Timestamp</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for threat in threats %}
+                    <tr>
+                        <td>{{ threat.id }}</td>
+                        <td>{{ threat.source }}</td>
+                        <td>{{ threat.destination }}</td>
+                        <td class="status-{{ threat.severity|lower }}">
+                            {{ threat.severity|title }}
+                        </td>
+                        <td>{{ threat.description }}</td>
+                        <td>{{ threat.timestamp }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function applyFilters() {
+            let search = document.getElementById("searchThreat").value.toLowerCase();
+            let severity = document.getElementById("severityFilter").value.toLowerCase();
+            
+            document.querySelectorAll("tbody tr").forEach(row => {
+                let threatDesc = row.cells[4].textContent.toLowerCase();
+                let threatSeverity = row.cells[3].textContent.toLowerCase();
+
+                let matchesSearch = threatDesc.includes(search);
+                let matchesSeverity = severity ? threatSeverity.includes(severity) : true;
+
+                row.style.display = (matchesSearch && matchesSeverity) ? "table-row" : "none";
+            });
+        }
+    </script>
+</body>
+</html>

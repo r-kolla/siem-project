@@ -1,0 +1,249 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Device Management</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&display=swap">
+    <style>
+        body {
+            font-family: 'IBM Plex Sans', sans-serif;
+            background-color: #1b1b1b;
+            color: #d1d1d1;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        .sidebar {
+            width: 250px;
+            background-color: #141414;
+            padding: 20px;
+            height: 100vh;
+        }
+        .sidebar ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        .sidebar ul li {
+            padding: 10px 15px;
+            margin: 10px 0;
+            background-color: #222;
+            border-radius: 5px;
+        }
+        .sidebar ul li a {
+            text-decoration: none;
+            color: #d1d1d1;
+            display: block;
+        }
+        .sidebar ul li:hover {
+            background-color: #333; /* Dark grey instead of blue */
+        }
+        .main-content {
+            flex-grow: 1;
+            padding: 20px;
+        }
+        .header {
+            background-color: #0d0d0d;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+        .content-box {
+            background-color: #222;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+        .filters input,
+        .filters select {
+            background-color: #333; /* Dark grey instead of blue */
+            color: white;
+        }
+        .filters button {
+            padding: 10px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 5px;
+        }
+        .filters input {
+            background-color: #333;
+            color: white;
+        }
+        .filters select {
+            background-color: #0072C6;
+            color: white;
+        }
+        .filters button {
+            background-color: #28a745;
+            color: white;
+            cursor: pointer;
+        }
+        .filters button:hover {
+            background-color: #218838;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #1e1e1e;
+            color: white;
+            margin-top: 20px;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 10px;
+            border: 1px solid #333;
+            text-align: center;
+        }
+        th {
+            background-color: #333; /* Dark grey instead of blue */
+        }
+        .status-green {
+            color: #28a745;
+            font-weight: bold;
+        }
+        .status-red {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        .block-btn, .authorize-btn {
+            background-color: transparent;
+            border: 1px solid white;
+            padding: 5px 10px;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        .block-btn:hover {
+            background-color: #dc3545;
+        }
+        .authorize-btn:hover {
+            background-color: #28a745;
+        }
+    </style>
+</head>
+<body>
+    {% include 'sidebar.html' %}
+
+    <div class="main-content">
+        <div class="header">Device Management</div>
+        <div class="content-box">
+            <div class="filters">
+                <input type="text" id="searchHostname" placeholder="Search Hostname">
+                <input type="text" id="searchIP" placeholder="Search IP">
+                <select id="filterAuth">
+                    <option value="">All</option>
+                    <option value="authorized">Authorized</option>
+                    <option value="blocked">Blocked</option>
+                </select>
+                <button onclick="applyFilters()">Apply</button>
+            </div>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Device ID</th>
+                        <th>MAC Address</th>
+                        <th>IP Address</th>
+                        <th>Hostname</th>
+                        <th>Status</th>
+                        <th>Last Seen</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for device in devices %}
+                    <tr>
+                        <td>{{ device.id }}</td>
+                        <td>{{ device.mac_address }}</td>
+                        <td>{{ device.ip_address }}</td>
+                        <td>{{ device.hostname|default:"Unknown" }}</td>
+                        <td class="{% if device.is_authorized %}status-green{% else %}status-red{% endif %}">
+                            {% if device.is_authorized %}
+                                Authorized
+                            {% else %}
+                                Blocked
+                            {% endif %}
+                        </td>
+                        <td>{{ device.last_seen }}</td>
+                        <td>
+                            {% if device.is_authorized %}
+                                <button class="block-btn" onclick="toggleAuthorization('{{ device.id }}', 'block')">
+                                    <i class="fas fa-ban"></i> Block
+                                </button>
+                            {% else %}
+                                <button class="authorize-btn" onclick="toggleAuthorization('{{ device.id }}', 'authorize')">
+                                    <i class="fas fa-check"></i> Authorize
+                                </button>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function applyFilters() {
+            let hostname = document.getElementById("searchHostname").value.toLowerCase();
+            let ip = document.getElementById("searchIP").value.toLowerCase();
+            let authFilter = document.getElementById("filterAuth").value;
+            
+            document.querySelectorAll("tbody tr").forEach(row => {
+                let hostCell = row.cells[3].textContent.toLowerCase();
+                let ipCell = row.cells[2].textContent.toLowerCase();
+                let authCell = row.cells[4].textContent.toLowerCase();
+                
+                let matchesHostname = hostCell.includes(hostname);
+                let matchesIP = ipCell.includes(ip);
+                let matchesAuth = authFilter ? authCell.includes(authFilter) : true;
+                
+                row.style.display = (matchesHostname && matchesIP && matchesAuth) ? "table-row" : "none";
+            });
+        }
+
+        async function toggleAuthorization(deviceId, action) {
+            const csrftoken = getCookie('csrftoken');
+            try {
+                const response = await fetch(`/SiemApp/devices/${action}/${deviceId}/`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrftoken
+                    },
+                    credentials: 'same-origin'
+                });
+                const data = await response.json();
+                if (response.ok) {
+                    alert(data.message);
+                    location.reload();
+                } else {
+                    alert("Error: " + data.message);
+                }
+            } catch (error) {
+                console.error("Request failed:", error);
+            }
+        }
+
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.startsWith(name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+    </script>
+</body>
+</html>
