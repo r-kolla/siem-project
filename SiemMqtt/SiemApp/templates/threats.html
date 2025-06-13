@@ -1,177 +1,385 @@
-{% load static %}
+{% extends 'base.html' %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Threats</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&display=swap">
-    <style>
-        body {
-            font-family: 'IBM Plex Sans', sans-serif;
-            background-color: #1b1b1b;
-            color: #d1d1d1;
-            margin: 0;
-            padding: 0;
-            display: flex;
-        }
-        .sidebar {
-            width: 250px;
-            background-color: #141414;
-            padding: 20px;
-            height: 100vh;
-        }
-        .sidebar ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .sidebar ul li {
-            padding: 10px 15px;
-            margin: 10px 0;
-            background-color: #222;
-            border-radius: 5px;
-        }
-        .sidebar ul li a {
-            text-decoration: none;
-            color: #d1d1d1;
-            display: block;
-        }
-        .sidebar ul li:hover {
-            background-color: #333;
-        }
-        .main-content {
-            flex-grow: 1;
-            padding: 20px;
-        }
-        .header {
-            background-color: #0d0d0d;
-            padding: 15px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        .content-box {
-            background-color: #222;
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 8px;
-        }
-        .filters input,
-        .filters select {
-            background-color: #333;
-            color: white;
-        }
-        .filters button {
-            padding: 10px;
-            margin-right: 10px;
-            border: none;
-            border-radius: 5px;
-            background-color: #28a745;
-            color: white;
-            cursor: pointer;
-        }
-        .filters button:hover {
-            background-color: #218838;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #1e1e1e;
-            color: white;
-            margin-top: 20px;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 10px;
-            border: 1px solid #333;
-            text-align: center;
-        }
-        th {
-            background-color: #333;
-        }
-        .status-critical {
-            color: #dc3545;
-            font-weight: bold;
-        }
-        .status-high {
-            color: orange;
-            font-weight: bold;
-        }
-        .status-medium {
-            color: yellow;
-            font-weight: bold;
-        }
-        .status-low {
-            color: lightgreen;
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    {% include 'sidebar.html' %}
+{% block title %}Threats - MQTT SIEM{% endblock %}
 
-    <div class="main-content">
-        <div class="header">Threats</div>
-        <div class="content-box">
-            <div class="filters">
-                <input type="text" id="searchThreat" placeholder="Search Threat">
-                <select id="severityFilter">
-                    <option value="">All Severities</option>
-                    <option value="low">Low</option>
-                    <option value="medium">Medium</option>
-                    <option value="high">High</option>
-                    <option value="critical">Critical</option>
-                </select>
-                <button onclick="applyFilters()">Apply</button>
-            </div>
+{% block header_title %}Threat Management{% endblock %}
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Threat ID</th>
-                        <th>Source</th>
-                        <th>Destination</th>
-                        <th>Severity</th>
-                        <th>Description</th>
-                        <th>Timestamp</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for threat in threats %}
-                    <tr>
-                        <td>{{ threat.id }}</td>
-                        <td>{{ threat.source }}</td>
-                        <td>{{ threat.destination }}</td>
-                        <td class="status-{{ threat.severity|lower }}">
-                            {{ threat.severity|title }}
-                        </td>
-                        <td>{{ threat.description }}</td>
-                        <td>{{ threat.timestamp }}</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+{% block content %}
+<div class="content-row">
+    <!-- Left sidebar with severity counts -->
+    <div class="sidebar-box">
+        <div class="sidebar-header">
+            <h3>Severity</h3>
+        </div>
+        <div class="sidebar-content">
+            <ul class="severity-list">
+                <li class="severity-item {% if filters.severity == '4' %}active{% endif %}">
+                    <a href="?severity=4">
+                        <span class="severity severity-critical">Critical</span>
+                        <span class="count">{{ severity_counts.critical }}</span>
+                    </a>
+                </li>
+                <li class="severity-item {% if filters.severity == '3' %}active{% endif %}">
+                    <a href="?severity=3">
+                        <span class="severity severity-high">High</span>
+                        <span class="count">{{ severity_counts.high }}</span>
+                    </a>
+                </li>
+                <li class="severity-item {% if filters.severity == '2' %}active{% endif %}">
+                    <a href="?severity=2">
+                        <span class="severity severity-medium">Medium</span>
+                        <span class="count">{{ severity_counts.medium }}</span>
+                    </a>
+                </li>
+                <li class="severity-item {% if filters.severity == '1' %}active{% endif %}">
+                    <a href="?severity=1">
+                        <span class="severity severity-low">Low</span>
+                        <span class="count">{{ severity_counts.low }}</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="sidebar-header">
+            <h3>Recent Activity</h3>
+        </div>
+        <div class="sidebar-content">
+            <ul class="timeline">
+                {% for threat in recent_threats %}
+                <li class="timeline-item">
+                    <div class="timeline-badge severity-{% if threat.rule.severity == 4 %}critical{% elif threat.rule.severity == 3 %}high{% elif threat.rule.severity == 2 %}medium{% else %}low{% endif %}"></div>
+                    <div class="timeline-content">
+                        <h4>{{ threat.rule.name }}</h4>
+                        <p>{{ threat.detected_at|date:"M d, H:i" }}</p>
+                    </div>
+                </li>
+                {% empty %}
+                <li class="timeline-item">
+                    <div class="timeline-content">
+                        <p>No recent threats</p>
+                    </div>
+                </li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
-
-    <script>
-        function applyFilters() {
-            let search = document.getElementById("searchThreat").value.toLowerCase();
-            let severity = document.getElementById("severityFilter").value.toLowerCase();
+    
+    <!-- Main content area -->
+    <div class="content-area">
+        <div class="content-box">
+            <div class="content-box-header">
+                <h2>Active Threats</h2>
+                <div>
+                    <button class="btn btn-outline" onclick="clearFilters()">
+                        <i class="fas fa-broom"></i> Clear Filters
+                    </button>
+                </div>
+            </div>
             
-            document.querySelectorAll("tbody tr").forEach(row => {
-                let threatDesc = row.cells[4].textContent.toLowerCase();
-                let threatSeverity = row.cells[3].textContent.toLowerCase();
+            <!-- Filters section -->
+            <div class="filters" style="padding: 15px; background-color: var(--secondary-bg); border-bottom: 1px solid var(--border-color);">
+                <form id="filterForm" method="get">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label for="rule-filter">Rule</label>
+                            <select id="rule-filter" name="rule" style="width: 100%; padding: 8px; background-color: var(--content-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+                                <option value="">All Rules</option>
+                                {% for rule in rules %}
+                                <option value="{{ rule.id }}" {% if filters.rule == rule.id|stringformat:"s" %}selected{% endif %}>{{ rule.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div>
+                            <label for="start-date">Start Date</label>
+                            <input type="date" id="start-date" name="start_date" value="{{ filters.start_date }}" style="width: 100%; padding: 8px; background-color: var(--content-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label for="end-date">End Date</label>
+                            <input type="date" id="end-date" name="end_date" value="{{ filters.end_date }}" style="width: 100%; padding: 8px; background-color: var(--content-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+                        </div>
+                        <div>
+                            <label for="status-filter">Status</label>
+                            <select id="status-filter" name="status" style="width: 100%; padding: 8px; background-color: var(--content-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+                                <option value="">All Status</option>
+                                <option value="pending" {% if filters.status == 'pending' %}selected{% endif %}>Pending</option>
+                                <option value="in_progress" {% if filters.status == 'in_progress' %}selected{% endif %}>In Progress</option>
+                                <option value="resolved" {% if filters.status == 'resolved' %}selected{% endif %}>Resolved</option>
+                                <option value="false_positive" {% if filters.status == 'false_positive' %}selected{% endif %}>False Positive</option>
+                            </select>
+                        </div>
+                        <div style="grid-column: span 4; text-align: right;">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i> Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            
+            <!-- Threats table -->
+            <div class="table-responsive">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Timestamp</th>
+                            <th>Rule</th>
+                            <th>Severity</th>
+                            <th>Device/IP</th>
+                            <th>Topic</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for threat in threats %}
+                        <tr>
+                            <td>{{ threat.id }}</td>
+                            <td>{{ threat.detected_at|date:"Y-m-d H:i:s" }}</td>
+                            <td>{{ threat.rule.name }}</td>
+                            <td>
+                                <span class="severity severity-{% if threat.rule.severity == 4 %}critical{% elif threat.rule.severity == 3 %}high{% elif threat.rule.severity == 2 %}medium{% else %}low{% endif %}">
+                                    {{ threat.rule.get_severity_display }}
+                                </span>
+                            </td>
+                            <td>
+                                {% if threat.log.device %}
+                                    {{ threat.log.device.name }}
+                                {% elif threat.log.ip %}
+                                    {{ threat.log.ip }}
+                                {% else %}
+                                    Unknown
+                                {% endif %}
+                            </td>
+                            <td>{{ threat.log.topic }}</td>
+                            <td>
+                                {% with alert=threat.alerts.first %}
+                                    {% if alert %}
+                                        <span class="status status-{{ alert.status }}">{{ alert.get_status_display }}</span>
+                                    {% else %}
+                                        <span class="status status-pending">Pending</span>
+                                    {% endif %}
+                                {% endwith %}
+                            </td>
+                            <td>
+                                <button class="btn btn-outline btn-sm" onclick="viewThreatDetails({{ threat.id }})">
+                                    <i class="fas fa-eye"></i> Details
+                                </button>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center">No threats found with the current filters.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            {% if threats.paginator.num_pages > 1 %}
+            <div class="pagination">
+                <div class="pagination-info">
+                    Showing {{ threats.start_index }} to {{ threats.end_index }} of {{ threats.paginator.count }} threats
+                </div>
+                <div class="pagination-controls">
+                    {% if threats.has_previous %}
+                    <a href="?page=1{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">&laquo; First</a>
+                    <a href="?page={{ threats.previous_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">&lsaquo; Prev</a>
+                    {% else %}
+                    <span class="pagination-btn disabled">&laquo; First</span>
+                    <span class="pagination-btn disabled">&lsaquo; Prev</span>
+                    {% endif %}
+                    
+                    <span class="pagination-current">Page {{ threats.number }} of {{ threats.paginator.num_pages }}</span>
+                    
+                    {% if threats.has_next %}
+                    <a href="?page={{ threats.next_page_number }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">Next &rsaquo;</a>
+                    <a href="?page={{ threats.paginator.num_pages }}{% for key, value in filters.items %}{% if value %}&{{ key }}={{ value }}{% endif %}{% endfor %}" class="pagination-btn">Last &raquo;</a>
+                    {% else %}
+                    <span class="pagination-btn disabled">Next &rsaquo;</span>
+                    <span class="pagination-btn disabled">Last &raquo;</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
 
-                let matchesSearch = threatDesc.includes(search);
-                let matchesSeverity = severity ? threatSeverity.includes(severity) : true;
+<!-- Threat Detail Modal -->
+<div class="modal" id="threatDetailModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7);">
+    <div style="background-color: var(--content-bg); margin: 5% auto; padding: 0; width: 90%; max-width: 900px; border-radius: 6px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3); max-height: 90vh; overflow-y: auto;">
+        <div style="padding: 15px 20px; background-color: var(--secondary-bg); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="threatModalTitle" style="margin: 0; color: var(--text-primary); font-size: 18px; font-weight: 500;">Threat Details</h2>
+            <span class="close-modal" style="color: var(--text-muted); font-size: 24px; font-weight: bold; cursor: pointer;" onclick="closeThreatModal()">&times;</span>
+        </div>
+        <div style="padding: 20px;" id="threatDetailContent">
+            <div class="loading-spinner">Loading...</div>
+        </div>
+    </div>
+</div>
+{% endblock %}
 
-                row.style.display = (matchesSearch && matchesSeverity) ? "table-row" : "none";
+{% block extra_js %}
+<script>
+    function clearFilters() {
+        window.location.href = "{% url 'threats' %}";
+    }
+    
+    function viewThreatDetails(threatId) {
+        const modal = document.getElementById('threatDetailModal');
+        const content = document.getElementById('threatDetailContent');
+        
+        // Show modal with loading spinner
+        modal.style.display = 'block';
+        content.innerHTML = '<div class="loading-spinner">Loading...</div>';
+        
+        // Fetch threat details
+        fetch(`/SiemApp/api/threats/${threatId}/`)
+            .then(response => response.json())
+            .then(data => {
+                // Format the data into a detailed view
+                let html = `
+                    <div class="threat-header">
+                        <div class="threat-badge severity-${getSeverityClass(data.rule.severity)}"></div>
+                        <div class="threat-title">
+                            <h3>${data.rule.name}</h3>
+                            <span class="threat-timestamp">${formatDate(data.detected_at)}</span>
+                        </div>
+                        <div class="threat-severity">
+                            <span class="severity severity-${getSeverityClass(data.rule.severity)}">${data.rule.severity_display}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="threat-details-grid">
+                        <div class="threat-details-section">
+                            <h4>Rule Information</h4>
+                            <dl>
+                                <dt>Rule Name</dt>
+                                <dd>${data.rule.name}</dd>
+                                
+                                <dt>Description</dt>
+                                <dd>${data.rule.description}</dd>
+                                
+                                <dt>Pattern</dt>
+                                <dd><code>${data.rule.pattern}</code></dd>
+                            </dl>
+                        </div>
+                        
+                        <div class="threat-details-section">
+                            <h4>Source Information</h4>
+                            <dl>
+                                <dt>Device</dt>
+                                <dd>${data.device ? data.device.name : 'N/A'}</dd>
+                                
+                                <dt>IP Address</dt>
+                                <dd>${data.log.ip || 'N/A'}</dd>
+                                
+                                <dt>Publisher ID</dt>
+                                <dd>${data.log.publisher_id || 'N/A'}</dd>
+                            </dl>
+                        </div>
+                    </div>
+                    
+                    <div class="threat-details-section">
+                        <h4>Message Information</h4>
+                        <dl>
+                            <dt>Topic</dt>
+                            <dd>${data.log.topic}</dd>
+                            
+                            <dt>Message</dt>
+                            <dd><pre>${data.log.message}</pre></dd>
+                            
+                            <dt>QoS</dt>
+                            <dd>${data.log.qos}</dd>
+                            
+                            <dt>Retain</dt>
+                            <dd>${data.log.retain ? 'Yes' : 'No'}</dd>
+                        </dl>
+                    </div>
+                    
+                    <div class="threat-actions">
+                        <button class="btn btn-outline" onclick="updateThreatStatus(${data.id}, 'in_progress')">Mark In Progress</button>
+                        <button class="btn btn-primary" onclick="updateThreatStatus(${data.id}, 'resolved')">Mark Resolved</button>
+                        <button class="btn btn-outline" onclick="updateThreatStatus(${data.id}, 'false_positive')">False Positive</button>
+                    </div>
+                `;
+                
+                content.innerHTML = html;
+            })
+            .catch(error => {
+                content.innerHTML = `<div class="error-message">Error loading threat details: ${error}</div>`;
             });
+    }
+    
+    function closeThreatModal() {
+        document.getElementById('threatDetailModal').style.display = 'none';
+    }
+    
+    function updateThreatStatus(threatId, status) {
+        fetch(`/SiemApp/api/threats/${threatId}/status/`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': getCookie('csrftoken')
+            },
+            body: JSON.stringify({ status: status })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Close modal
+                closeThreatModal();
+                
+                // Reload page to show updated status
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while updating the threat status');
+        });
+    }
+    
+    function getSeverityClass(severity) {
+        switch(parseInt(severity)) {
+            case 4: return 'critical';
+            case 3: return 'high';
+            case 2: return 'medium';
+            default: return 'low';
         }
-    </script>
-</body>
-</html>
+    }
+    
+    function formatDate(dateString) {
+        const date = new Date(dateString);
+        return date.toLocaleString();
+    }
+    
+    // Function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        const modal = document.getElementById('threatDetailModal');
+        if (event.target === modal) {
+            closeThreatModal();
+        }
+    });
+</script>
+{% endblock %}

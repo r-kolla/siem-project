@@ -1,0 +1,14 @@
+{
+    "files.associations": {
+        "*.html": "html"
+    },
+    "emmet.includeLanguages": {
+        "django-html": "html"
+    },
+    "html.format.indentHandlebars": true,
+    "html.format.indentInnerHtml": true,
+    "[html]": {
+        "editor.formatOnSave": false
+    },
+    "javascript.validate.enable": false
+}

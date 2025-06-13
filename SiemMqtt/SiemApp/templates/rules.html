@@ -1,147 +1,389 @@
-{% load static %}
+{% extends 'base.html' %}
 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detection Rules</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;600&display=swap">
-    <style>
-        body {
-            font-family: 'IBM Plex Sans', sans-serif;
-            background-color: #1b1b1b;
-            color: #d1d1d1;
-            margin: 0;
-            padding: 0;
-            display: flex;
-        }
-        .sidebar {
-            width: 250px;
-            background-color: #141414;
-            padding: 20px;
-            height: 100vh;
-        }
-        .sidebar ul {
-            list-style-type: none;
-            padding: 0;
-        }
-        .sidebar ul li {
-            padding: 10px 15px;
-            margin: 10px 0;
-            background-color: #222;
-            border-radius: 5px;
-        }
-        .sidebar ul li a {
-            text-decoration: none;
-            color: #d1d1d1;
-            display: block;
-        }
-        .sidebar ul li:hover {
-            background-color: #333;
-        }
-        .main-content {
-            flex-grow: 1;
-            padding: 20px;
-        }
-        .header {
-            background-color: #0d0d0d;
-            padding: 15px;
-            text-align: center;
-            font-size: 1.5rem;
-            font-weight: 600;
-        }
-        .content-box {
-            background-color: #222;
-            padding: 20px;
-            margin-top: 20px;
-            border-radius: 8px;
-        }
-        .filters input {
-            background-color: #333;
-            color: white;
-        }
-        .filters button {
-            padding: 10px;
-            margin-right: 10px;
-            border: none;
-            border-radius: 5px;
-            background-color: #28a745;
-            color: white;
-            cursor: pointer;
-        }
-        .filters button:hover {
-            background-color: #218838;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background-color: #1e1e1e;
-            color: white;
-            margin-top: 20px;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-        th, td {
-            padding: 10px;
-            border: 1px solid #333;
-            text-align: center;
-        }
-        th {
-            background-color: #333;
-        }
-    </style>
-</head>
-<body>
-    {% include 'sidebar.html' %}
+{% block title %}Rules - MQTT SIEM{% endblock %}
 
-    <div class="main-content">
-        <div class="header">Detection Rules</div>
-        <div class="content-box">
-            <div class="filters">
-                <input type="text" id="searchRule" placeholder="Search Rule">
-                <button onclick="applyFilters()">Apply</button>
-            </div>
+{% block header_title %}Rule Management{% endblock %}
 
-            <table>
-                <thead>
-                    <tr>
-                        <th>Rule ID</th>
-                        <th>Name</th>
-                        <th>Description</th>
-                        <th>Severity</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for rule in rules %}
-                    <tr>
-                        <td>{{ rule.id }}</td>
-                        <td>{{ rule.name }}</td>
-                        <td>{{ rule.description }}</td>
-                        <td class="status-{{ rule.severity|lower }}">
-                            {{ rule.severity|title }}
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+{% block content %}
+<div class="content-box">
+    <div class="content-box-header">
+        <h2>Detection Rules</h2>
+        <div>
+            <button class="btn btn-primary" id="addRuleBtn" onclick="showAddRuleModal()">
+                <i class="fas fa-plus"></i> New Rule
+            </button>
         </div>
     </div>
 
-    <script>
-        function applyFilters() {
-            let search = document.getElementById("searchRule").value.toLowerCase();
+    <div class="filters" style="padding: 15px; background-color: var(--secondary-bg); border-bottom: 1px solid var(--border-color);">
+        <div style="display: flex; gap: 15px; align-items: center;">
+            <input type="text" id="searchRule" placeholder="Search Rule" style="flex: 1; background-color: var(--content-bg); border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 12px; border-radius: 4px;">
+            <select id="severityFilter" style="background-color: var(--content-bg); border: 1px solid var(--border-color); color: var(--text-primary); padding: 8px 12px; border-radius: 4px; width: 150px;">
+                <option value="">All Severities</option>
+                <option value="1">Low</option>
+                <option value="2">Medium</option>
+                <option value="3">High</option>
+                <option value="4">Critical</option>
+            </select>
+            <button class="btn btn-primary" onclick="applyFilters()" style="white-space: nowrap;">
+                <i class="fas fa-filter"></i> Apply
+            </button>
+        </div>
+    </div>
 
-            document.querySelectorAll("tbody tr").forEach(row => {
-                let ruleName = row.cells[1].textContent.toLowerCase();
-                let ruleDesc = row.cells[2].textContent.toLowerCase();
+    <div class="table-responsive">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Rule Name</th>
+                    <th>Description</th>
+                    <th>Pattern</th>
+                    <th>Severity</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for rule in rules %}
+                <tr>
+                    <td>{{ rule.id }}</td>
+                    <td>{{ rule.name }}</td>
+                    <td>{{ rule.description }}</td>
+                    <td>{{ rule.pattern }}</td>
+                    <td>
+                        <span class="severity severity-{% if rule.severity == 4 %}critical{% elif rule.severity == 3 %}high{% elif rule.severity == 2 %}medium{% else %}low{% endif %}">
+                            {{ rule.get_severity_display }}
+                        </span>
+                    </td>
+                    <td>
+                        <button class="btn btn-outline btn-sm edit-rule-btn" data-id="{{ rule.id }}" onclick="editRule(this)">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="btn btn-outline btn-sm delete-rule-btn" data-id="{{ rule.id }}" onclick="deleteRule(this)">
+                            <i class="fas fa-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No rules defined. Click "New Rule" to create your first rule.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
 
-                let matchesSearch = ruleName.includes(search) || ruleDesc.includes(search);
+<div class="content-box">
+    <div class="content-box-header">
+        <h2>Rule Effectiveness</h2>
+    </div>
+    <div style="padding: 20px;">
+        <div style="height: 300px;">
+            <canvas id="ruleEffectivenessChart"></canvas>
+        </div>
+    </div>
+</div>
 
-                row.style.display = matchesSearch ? "table-row" : "none";
+<!-- Rule Modal -->
+<div class="modal" id="ruleModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.7);">
+    <div style="background-color: var(--content-bg); margin: 5% auto; padding: 0; width: 80%; max-width: 700px; border-radius: 6px; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);">
+        <div style="padding: 15px 20px; background-color: var(--secondary-bg); border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+            <h2 id="modalTitle" style="margin: 0; color: var(--text-primary); font-size: 18px; font-weight: 500;">Add New Rule</h2>
+            <span class="close-modal" style="color: var(--text-muted); font-size: 24px; font-weight: bold; cursor: pointer;" onclick="closeModal()">&times;</span>
+        </div>
+        <div style="padding: 20px;">
+            <form id="ruleForm">
+                {% csrf_token %}
+                <input type="hidden" id="ruleId" name="rule_id">
+                
+                <div style="margin-bottom: 20px;">
+                    <label for="ruleName" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-weight: 500;">Rule Name</label>
+                    <input type="text" id="ruleName" name="name" required style="width: 100%; padding: 10px; background-color: var(--secondary-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label for="ruleDescription" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-weight: 500;">Description</label>
+                    <textarea id="ruleDescription" name="description" required style="width: 100%; padding: 10px; background-color: var(--secondary-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px; min-height: 100px; resize: vertical;"></textarea>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label for="rulePattern" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-weight: 500;">Pattern</label>
+                    <input type="text" id="rulePattern" name="pattern" required style="width: 100%; padding: 10px; background-color: var(--secondary-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+                    <div style="margin-top: 8px; font-size: 13px; color: var(--text-muted);">
+                        <p>Pattern format options:</p>
+                        <ul style="margin-left: 20px;">
+                            <li><strong>Plain text:</strong> Match exact text in message or topic</li>
+                            <li><strong>Regex:</strong> Use /pattern/ format (e.g. /failed.*login/)</li>
+                            <li><strong>Numeric comparison:</strong> Use operators like > < == (e.g. > 90 to detect values above 90)</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <label for="ruleSeverity" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-weight: 500;">Severity</label>
+                    <select id="ruleSeverity" name="severity" required style="width: 100%; padding: 10px; background-color: var(--secondary-bg); border: 1px solid var(--border-color); color: var(--text-primary); border-radius: 4px;">
+                        <option value="1">Low</option>
+                        <option value="2">Medium</option>
+                        <option value="3">High</option>
+                        <option value="4">Critical</option>
+                    </select>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 30px;">
+                    <button type="button" class="btn btn-outline" id="cancelRuleBtn" onclick="closeModal()">Cancel</button>
+                    <button type="button" class="btn btn-primary" id="saveRuleBtn" onclick="saveRule()">Save Rule</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // Chart initialization with dynamic data
+    const ctx = document.getElementById('ruleEffectivenessChart').getContext('2d');
+    const chart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_labels|safe }},
+            datasets: [{
+                label: 'Detections Last 30 Days',
+                data: {{ chart_data|safe }},
+                backgroundColor: [
+                    'rgba(255, 99, 132, 0.5)',
+                    'rgba(54, 162, 235, 0.5)',
+                    'rgba(255, 206, 86, 0.5)',
+                    'rgba(75, 192, 192, 0.5)',
+                    'rgba(153, 102, 255, 0.5)'
+                ],
+                borderColor: [
+                    'rgba(255, 99, 132, 1)',
+                    'rgba(54, 162, 235, 1)',
+                    'rgba(255, 206, 86, 1)',
+                    'rgba(75, 192, 192, 1)',
+                    'rgba(153, 102, 255, 1)'
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: {
+                        color: '#d1d1d1'
+                    }
+                },
+                title: {
+                    display: true,
+                    text: 'Rule Detections (Last 30 Days)',
+                    color: '#ffffff'
+                }
+            },
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#d1d1d1'
+                    }
+                },
+                y: {
+                    beginAtZero: true,
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    },
+                    ticks: {
+                        color: '#d1d1d1'
+                    }
+                }
+            }
+        }
+    });
+    
+    // Filter functionality
+    function applyFilters() {
+        let search = document.getElementById("searchRule").value.toLowerCase();
+        let severity = document.getElementById("severityFilter").value;
+        
+        document.querySelectorAll(".data-table tbody tr").forEach(row => {
+            let nameCell = row.cells[1].textContent.toLowerCase();
+            let descCell = row.cells[2].textContent.toLowerCase();
+            let severityCell = row.cells[4].textContent.trim();
+            
+            let severityValue = 0;
+            if (severityCell.includes("Low")) severityValue = 1;
+            else if (severityCell.includes("Medium")) severityValue = 2;
+            else if (severityCell.includes("High")) severityValue = 3;
+            else if (severityCell.includes("Critical")) severityValue = 4;
+            
+            let matchesSearch = nameCell.includes(search) || descCell.includes(search);
+            let matchesSeverity = severity ? severityValue == severity : true;
+
+            row.style.display = (matchesSearch && matchesSeverity) ? "table-row" : "none";
+        });
+    }
+    
+    // Modal functionality
+    const modal = document.getElementById('ruleModal');
+
+    
+    
+    // Show modal
+    function showAddRuleModal() {
+        // Clear form
+        document.getElementById('ruleForm').reset();
+        document.getElementById('ruleId').value = '';
+        
+        // Update modal title
+        document.getElementById('modalTitle').textContent = 'Add New Rule';
+        
+        // Show modal
+        modal.style.display = 'block';
+    }
+    
+    // Edit rule
+    function editRule(btn) {
+        const row = btn.closest('tr');
+        const id = row.cells[0].textContent;
+        const name = row.cells[1].textContent;
+        const description = row.cells[2].textContent;
+        const pattern = row.cells[3].textContent;
+        const severity = row.cells[4].textContent;
+        
+        // Populate form
+        document.getElementById('ruleId').value = id;
+        document.getElementById('ruleName').value = name;
+        document.getElementById('ruleDescription').value = description;
+        document.getElementById('rulePattern').value = pattern;
+        
+        // Set severity
+        const severitySelect = document.getElementById('ruleSeverity');
+        if (severity.includes('Low')) severitySelect.value = '1';
+        else if (severity.includes('Medium')) severitySelect.value = '2';
+        else if (severity.includes('High')) severitySelect.value = '3';
+        else if (severity.includes('Critical')) severitySelect.value = '4';
+        
+        // Update modal title
+        document.getElementById('modalTitle').textContent = 'Edit Rule';
+        
+        // Show modal
+        modal.style.display = 'block';
+    }
+    
+    // Delete rule
+    function deleteRule(btn) {
+        if (confirm('Are you sure you want to delete this rule?')) {
+            const row = btn.closest('tr');
+            const id = row.cells[0].textContent;
+            
+            // Send delete request
+            fetch(`/SiemApp/rules/delete/${id}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    // Remove row from table
+                    row.remove();
+                    alert('Rule deleted successfully');
+                } else {
+                    alert(data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while deleting the rule');
             });
         }
-    </script>
-</body>
-</html>
+    }
+    
+    // Close modal
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+    
+    // Close modal when clicking outside
+    window.addEventListener('click', function(event) {
+        if (event.target === modal) {
+            closeModal();
+        }
+    });
+    
+    // Save rule
+    function saveRule() {
+        const id = document.getElementById('ruleId').value;
+        const name = document.getElementById('ruleName').value;
+        const description = document.getElementById('ruleDescription').value;
+        const pattern = document.getElementById('rulePattern').value;
+        const severity = document.getElementById('ruleSeverity').value;
+        
+        // Validate form
+        if (!name || !description || !pattern || !severity) {
+            alert('All fields are required');
+            return;
+        }
+        
+        // Create form data
+        const formData = new FormData();
+        formData.append('name', name);
+        formData.append('description', description);
+        formData.append('pattern', pattern);
+        formData.append('severity', severity);
+        
+        // Determine if adding or editing
+        const url = id ? `/SiemApp/rules/edit/${id}/` : '/SiemApp/rules/add/';
+        
+        // Send request
+        fetch(url, {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': getCookie('csrftoken')
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success') {
+                // Close modal
+                closeModal();
+                
+                // Reload page to show new/updated rule
+                location.reload();
+            } else {
+                alert(data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while saving the rule');
+        });
+    }
+    
+    // Function to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+</script>
+{% endblock %}

@@ -1,0 +1,70 @@
+INFO 2025-03-18 04:23:50,456 autoreload Watching for file changes with StatReloader
+INFO 2025-03-18 04:37:16,825 autoreload /Users/revanthkolla/Desktop/siem-project/SiemMqtt/SiemMqtt/settings.py changed, reloading.
+INFO 2025-03-18 04:37:17,127 autoreload Watching for file changes with StatReloader
+INFO 2025-03-18 04:43:07,159 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9028
+INFO 2025-03-18 04:43:09,822 basehttp "POST /SiemApp/devices/block/2/ HTTP/1.1" 200 56
+INFO 2025-03-18 04:43:47,378 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9037
+INFO 2025-03-18 04:46:39,446 basehttp "POST /SiemApp/devices/authorize/2/ HTTP/1.1" 200 59
+INFO 2025-03-18 04:46:40,872 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9028
+INFO 2025-03-19 04:59:06,099 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9028
+INFO 2025-03-19 04:59:11,627 basehttp "GET /SiemApp/threats/ HTTP/1.1" 200 5150
+INFO 2025-03-19 04:59:12,491 basehttp "GET /SiemApp/rules/ HTTP/1.1" 200 4112
+INFO 2025-03-19 04:59:14,628 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2187
+INFO 2025-03-19 05:02:14,875 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2187
+INFO 2025-03-19 05:04:41,403 autoreload /Users/revanthkolla/Desktop/siem-project/SiemMqtt/SiemApp/views.py changed, reloading.
+INFO 2025-03-19 05:04:41,694 autoreload Watching for file changes with StatReloader
+INFO 2025-03-19 05:07:51,011 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2187
+INFO 2025-03-19 05:08:16,915 autoreload /Users/revanthkolla/Desktop/siem-project/SiemMqtt/SiemMqtt/settings.py changed, reloading.
+INFO 2025-03-19 05:08:17,208 autoreload Watching for file changes with StatReloader
+INFO 2025-03-19 05:09:37,873 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2187
+INFO 2025-03-19 05:10:48,643 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2636
+INFO 2025-03-19 05:10:49,865 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2636
+INFO 2025-03-19 05:10:50,489 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2636
+INFO 2025-03-19 05:10:50,879 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2636
+INFO 2025-03-19 05:10:51,140 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2636
+INFO 2025-03-19 05:10:58,932 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2636
+INFO 2025-03-19 05:15:51,526 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:15:51,994 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:17:46,488 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:18:51,460 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:19:48,060 autoreload Watching for file changes with StatReloader
+INFO 2025-03-19 05:19:50,634 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:19:51,862 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:19:52,030 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:19:53,112 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:19:53,299 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:19:53,897 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:19:54,095 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:19:54,266 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:39:37,834 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2478
+INFO 2025-03-19 05:40:27,357 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2840
+INFO 2025-03-19 05:41:20,063 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2876
+INFO 2025-03-19 05:57:09,549 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9028
+INFO 2025-03-19 05:58:24,352 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2876
+INFO 2025-03-19 08:53:28,955 autoreload Watching for file changes with StatReloader
+INFO 2025-03-20 15:35:07,546 autoreload Watching for file changes with StatReloader
+INFO 2025-03-20 15:35:33,874 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9028
+WARNING 2025-03-20 15:35:33,951 log Not Found: /favicon.ico
+WARNING 2025-03-20 15:35:33,952 basehttp "GET /favicon.ico HTTP/1.1" 404 2212
+INFO 2025-03-20 15:35:40,154 basehttp "GET /SiemApp/threats/ HTTP/1.1" 200 5150
+INFO 2025-03-20 15:35:43,917 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2876
+INFO 2025-03-20 15:38:27,919 basehttp "GET /SiemApp/rules/ HTTP/1.1" 200 4112
+INFO 2025-03-20 15:38:29,494 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2876
+INFO 2025-03-20 15:53:15,506 basehttp "GET /SiemApp/threats/ HTTP/1.1" 200 5150
+INFO 2025-03-20 15:56:00,931 basehttp "GET /SiemApp/rules/ HTTP/1.1" 200 4112
+INFO 2025-03-20 15:56:02,022 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2876
+INFO 2025-03-20 15:56:07,016 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9028
+INFO 2025-03-20 15:56:14,729 basehttp "POST /SiemApp/devices/block/2/ HTTP/1.1" 200 56
+INFO 2025-03-20 15:56:16,558 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9037
+INFO 2025-03-20 15:56:24,162 basehttp "POST /SiemApp/devices/authorize/2/ HTTP/1.1" 200 59
+INFO 2025-03-20 15:56:25,344 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9028
+INFO 2025-03-20 16:04:52,336 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2876
+INFO 2025-03-20 16:34:36,891 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2876
+INFO 2025-03-20 16:34:41,904 basehttp "GET /SiemApp/logs/ HTTP/1.1" 200 2876
+INFO 2025-03-20 18:48:42,407 autoreload Watching for file changes with StatReloader
+INFO 2025-03-20 18:48:55,756 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9028
+INFO 2025-03-20 18:48:59,150 basehttp "POST /SiemApp/devices/block/2/ HTTP/1.1" 200 56
+INFO 2025-03-20 18:49:00,260 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9037
+INFO 2025-03-20 19:08:02,342 basehttp "POST /SiemApp/devices/authorize/2/ HTTP/1.1" 200 59
+INFO 2025-03-20 19:08:03,532 basehttp "GET /SiemApp/devices/ HTTP/1.1" 200 9028
+INFO 2025-03-20 19:12:17,510 autoreload /Users/revanthkolla/Desktop/siem-project/SiemMqtt/SiemMqtt/settings.py changed, reloading.
